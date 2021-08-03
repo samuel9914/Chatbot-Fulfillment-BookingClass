@@ -2,24 +2,23 @@
 // for Dialogflow fulfillment library docs, samples, and to report issues
 'use strict';
  
-const functions = require('firebase-functions');		//me-load Cloud Function untuk firebase SDK
-const admin = require('firebase-admin');			//me-load Firebase Admin SDK untuk mengakses Firebase Realtime Database
+const functions = require('firebase-functions');		//load Cloud Function for firebase SDK
+const admin = require('firebase-admin');			//load Firebase Admin SDK to access Firebase Realtime Database
 const {WebhookClient} = require('dialogflow-fulfillment');	//include dialogflow-fulfillmen library
 const {Card, Suggestion} = require('dialogflow-fulfillment');	
-const fetch = require("node-fetch");				//me-load modul Fetch API yang digunakan untuk melaksanakan HTTP Request
+const fetch = require("node-fetch");				//oad modul Fetch API, used for HTTP Request
 var os = require("os");
 
-admin.initializeApp({						//inisiasi hubungan aplikasi chatbot ke realtime database
+admin.initializeApp({						//connect chatbot service to realtime database
   
   	credential: admin.credential.applicationDefault(),
   	databaseURL: 'ws://newagent-ycgelw.firebaseio.com/'
-  
   
 });
  
 process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
  
-exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, response) => { //berisi semua fungsi yang bersangkutan dengan intent pada chatbot
+exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, response) => { //contain all function that have to do with intent
   const agent = new WebhookClient({ request, response });
   console.log('Dialogflow Request headers: ' + JSON.stringify(request.headers));
   console.log('Dialogflow Request body: ' + JSON.stringify(request.body));
@@ -28,19 +27,19 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     agent.add(`Welcome to my agent!`);
   }
  
-  function fallback(agent) {	//fungsi akan tereksekusi ketika input dari user tidak dimengerti oleh chatbot
+  function fallback(agent) {	//execute when user input unkown
     agent.add(`I didn't understand`);
     agent.add(`I'm sorry, can you try again?`);
     agent.add(`I think its a typo`);
     agent.add(`Use a proper english please`);
     agent.add(`What is that`);
   }
-    function capitalizeFirstLetter(words){	//membuat huruf pertama menjadi huruf kapital
+    function capitalizeFirstLetter(words){	//Capitalize first letter
     return  (words[0].toUpperCase() + words.slice(1).toLowerCase());
     
   }
   
-  let borrowData = { 	//objek untuk menampung informasi seputar peminjaman kelas
+  let borrowData = { 	//object to hold information about booking class
   	hari2:'',
     kelas2:'',
  //   jam2:'',
@@ -48,18 +47,13 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     npm2:''
   };
   
-  
-  function hello(agent){	//fungsi tereksekusi ketika user menyapa chatbot
+  function hello(agent){	//the function is executed when the user greets the chatbot
     agent.add("Hello I am Booker, i can check and book a classroom for you. If you need my help to borrow a classroom, you can type 'help'.");
   }
   
-  function HandleBorrowClass(agent){		// tereksekusi ketika input dari user memiliki intensi untuk meminjam kelas
-    
-
-  	
-      borrowData.kelas2 = agent.parameters.Kelas;	//mengekstrak informasi dari input user dan memasukannya keobjek borrowData
-     
-    
+  function HandleBorrowClass(agent){		// executed when input from the user has the intention of borrowing the class
+ 
+      borrowData.kelas2 = agent.parameters.Kelas;	//extract information from user input and insert it into borrow Data object
       borrowData.tanggal2= agent.parameters.Tanggal;
       //borrowData.jam2 = agent.parameters.jamMulai;
       borrowData.nama2 = agent.parameters.Nama;
@@ -72,7 +66,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   
     capitalizeFirstLetter(borrowData.nama2);
     
-    agent.context.set({				//membuat konteks yang berisi informasi dan akan dipass fungsi HandleBorrowClassYes
+    agent.context.set({				//create a context that contains information and will be pass to the HandleBorrowClassYes  function
               name: 'testtest',
               lifespan: 1,
               parameters:{Nama: borrowData.nama2,
@@ -87,14 +81,10 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     
     //menanyakan konfimasi atas informasi yang diberikan oleh user
     agent.add("Confirm booking "+ borrowData.kelas2 +" at "+ jamMulai.split('T')[1].split('+')[0] +" to "+jamSelesai.split('T')[1].split('+')[0]+' at '+borrowData.tanggal2.split('T')[0]  +  " as " + borrowData.nama2 +" with NPM "+borrowData.npm2 + " for "+ borrowData.desc2 + " (yes/no)");
-  
-    
   }
   
- 
-  
-  
-  function HandleBorrowClassYes(){				//tereksekusi ketika user memasukan 'yes' ketika konfirmasi
+
+  function HandleBorrowClassYes(){				//executed when the user enters 'yes' during confirmation
     
 	//mengambil informasi dari konteks yang sudah dibuat
     let kelas = agent.context.get('testtest').parameters.Kelas;
@@ -107,12 +97,12 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
  
    
     var id_temp;
-  	return admin.database().ref("id_ref/id").once('value').	//referensi ke id yang pada pada Real Time Database
+  	return admin.database().ref("id_ref/id").once('value').	//reference to the current id on the Real Time Database
     	then((snapshot) => {
       
   	  id_temp = snapshot.val();
-          id_temp++;						//Auto increment id request
-    	  agent.add('Request has been listed '+id_temp);	//pesan bahwa requestnya berhasil serta menampilkan id request dari user
+          id_temp++;						//Auto-increment id request
+    	  agent.add('Request has been listed '+id_temp);	//message that the request was successful and displays the request id from the user
           admin.database().ref('id_ref').set({id:id_temp});
 	
 		//mengambil data dari konteks
@@ -123,12 +113,10 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     	let nama = agent.context.get('testtest').parameters.Nama;
     	let npm = agent.context.get('testtest').parameters.Npm;
     	let desc = agent.context.get('testtest').parameters.Desc;
-          
-	
-		
-        const Url='http://map.or.id/titip/ccis/L';		//target URL untuk HTTP request
+         
+        const Url='http://map.or.id/titip/ccis/L';		//target URL for HTTP request, mysql
 
-		//memasukan informasi seputar peminjaman kelas kedalam form data
+		//enter information about class borrowing into the data form
         var FormData = require('form-data');
         var formdata = new FormData();
         formdata.append("key",npm);
@@ -140,7 +128,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
         formdata2.append("time_start","1");
         formdata2.append("time_end","2");
         formdata2.append("capacity","3");
-        const otherPram2 ={	//Parameter lain yang digunakan apda http request
+        const otherPram2 ={	//Other parameters used in http requests
 		
 		//body: formdata2,
 		mode: 'cors',
@@ -151,7 +139,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 		
         let url22 ='https://testcheckclass.000webhostapp.com/L/setReq?id='+id_temp+'&name="'+nama+'"&date="'+tanggal+'"&time_start="'+jamMulai+'"&time_end="'+jamSelesai+'"'+'&NPM="'+npm+'"&desc="'+desc+'"&classroom="'+kelas+'"';
       console.log(url22)  ;
-      fetch(url22,otherPram2).then(response => {		//melakukan http request menggunakan fetch API
+      fetch(url22,otherPram2).then(response => {		//make a http request using the fetch API
         
 	    return response.json();
 	
@@ -163,7 +151,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
       
       
       
-        const otherPram ={	//Parameter lain yang digunakan apda http request
+        const otherPram ={	//Other parameters used in http requests
 		
 		body: formdata,
 		mode: 'cors',
@@ -171,10 +159,10 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 		method:'POST'	
 		};
          
-        console.log(formdata );	//untuk memonitor apakah pengiriman datanya sesuai
+        console.log(formdata );	//to monitor whether the data transmission is appropriate
           
         
-    fetch(Url,otherPram).then(response => {		//melakukan http request menggunakan fetch API
+    fetch(Url,otherPram).then(response => {		//make a http request using the fetch API
         
 	return response.text();
 	
@@ -182,7 +170,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 	.then(text => {console.log(text);
 	});
           
-     admin.database().ref('booking list'+ '/' +'Booker_'+ id_temp).set({	//memasukan data ke Real Time Database (Firebase)
+     admin.database().ref('booking list'+ '/' +'Booker_'+ id_temp).set({	//input data to Real Time Database (Firebase)
       
    			
       		kelas:kelas,
@@ -221,7 +209,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
  	const url1= 'https://testcheckclass.000webhostapp.com/L/get?date="'+timeStart2[0]+'"&time_start="'+startClock[0]+'"&time_end="'+endClock[0]+'"&capacity="'+ capacity+'"';
     console.log('the URL '+ url1);
     
-    const otherPram2 ={	//Parameter lain yang digunakan apda http request
+    const otherPram2 ={	//Other parameters used in http requests
 		
 		//body: formdata2,
 		mode: 'cors',
@@ -230,7 +218,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 		};
      	
       var replys;
-       return fetch(url1,otherPram2).then(response => {		//melakukan http request menggunakan fetch API
+       return fetch(url1,otherPram2).then(response => {		//make a http request using the fetch API
         
 	    return response.json();
 	
